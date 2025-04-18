@@ -134,7 +134,7 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message || "Registration failed due to server timeout or connection issue";
       })
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
