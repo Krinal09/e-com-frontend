@@ -1,12 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
 export const fetchAllOrders = createAsyncThunk(
   "orders/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders`,
+        `${API_URL}/api/admin/orders`,
         { withCredentials: true }
       );
       return response.data;
@@ -21,7 +23,7 @@ export const updateOrderStatus = createAsyncThunk(
   async ({ orderId, status }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/${orderId}`,
+        `${API_URL}/api/admin/orders/${orderId}`,
         { status },
         { withCredentials: true }
       );
@@ -37,7 +39,7 @@ export const createCODOrder = createAsyncThunk(
   async (orderData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/admin/orders/cod",
+        `${API_URL}/api/admin/orders/cod`,
         orderData,
         { withCredentials: true }
       );
