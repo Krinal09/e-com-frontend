@@ -41,7 +41,7 @@ export const columns = [
             <span className="text-sm text-gray-500 line-through">${price}</span>
           )}
           <span className={salePrice > 0 ? "text-red-500" : ""}>
-            ${salePrice > 0 ? salePrice : price}
+            ₹{salePrice > 0 ? salePrice : price}
           </span>
         </div>
       );
