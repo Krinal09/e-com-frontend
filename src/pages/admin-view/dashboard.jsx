@@ -198,10 +198,10 @@ const AdminDashboard = () => {
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{totalRevenue.toFixed(2)}</div>
             {orderList.length > 0 && (
               <p className="text-xs text-muted-foreground">
-                Avg. ${(totalRevenue / orderList.length).toFixed(2)} per order
+                Avg. ₹{(totalRevenue / orderList.length).toFixed(2)} per order
               </p>
             )}
           </CardContent>
