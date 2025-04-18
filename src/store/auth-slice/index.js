@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
 const initialState = {
   isAuthenticated: false,
   isLoading: true,
@@ -12,7 +14,7 @@ export const registerUser = createAsyncThunk(
   "/auth/register",
   async (formData) => {
     const response = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
+      `${API_URL}/api/auth/register`,
       formData,
       {
         withCredentials: true,
@@ -26,7 +28,7 @@ export const loginUser = createAsyncThunk(
   "/auth/login",
   async (formData) => {
     const response = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
+      `${API_URL}/api/auth/login`,
       formData,
       {
         withCredentials: true,
@@ -40,7 +42,7 @@ export const logoutUser = createAsyncThunk(
   "/auth/logout",
   async () => {
     const response = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
+      `${API_URL}/api/auth/logout`,
       {},
       {
         withCredentials: true,
@@ -54,7 +56,7 @@ export const checkAuth = createAsyncThunk(
   "/auth/checkauth",
   async () => {
     const response = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL}/api/auth/check-auth`,
+      `${API_URL}/api/auth/check-auth`,
       {
         withCredentials: true,
         headers: {
@@ -71,7 +73,7 @@ export const updateUserProfile = createAsyncThunk(
   async ({ userName, profileImage }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/profile`,
+        `${API_URL}/api/auth/profile`,
         { userName, profileImage },
         { withCredentials: true }
       );
@@ -87,7 +89,7 @@ export const deleteUserAccount = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/profile`,
+        `${API_URL}/api/auth/profile`,
         { withCredentials: true }
       );
       return response.data;
@@ -102,7 +104,7 @@ export const changePassword = createAsyncThunk(
   async ({ oldPassword, newPassword }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/change-password`,
+        `${API_URL}/api/auth/change-password`,
         { oldPassword, newPassword },
         { withCredentials: true }
       );
