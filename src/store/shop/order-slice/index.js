@@ -1,25 +1,45 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-
 const initialState = {
   approvalURL: null,
   isLoading: false,
   orderId: null,
   orderList: [],
   orderDetails: null,
+  error: null
 };
 
 export const createNewOrder = createAsyncThunk(
   "/order/createNewOrder",
-  async (orderData) => {
-    const response = await axios.post(
-      `${API_URL}/api/shop/order/create`,
-      orderData
-    );
+  async (orderData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/shop/orders/create`,
+        orderData,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-    return response.data;
+      if (!response.data.success) {
+        return rejectWithValue(response.data);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("Create order error:", error.response?.data || error);
+      if (error.response?.data) {
+        return rejectWithValue(error.response.data);
+      }
+      return rejectWithValue({ 
+        success: false, 
+        message: error.message || "Failed to create order" 
+      });
+    }
   }
 );
 
@@ -27,11 +47,17 @@ export const capturePayment = createAsyncThunk(
   "/order/capturePayment",
   async ({ paymentId, payerId, orderId }) => {
     const response = await axios.post(
-      `${API_URL}/api/shop/order/capture`,
+      `${import.meta.env.VITE_BACKEND_URL}/api/shop/orders/capture`,
       {
         paymentId,
         payerId,
         orderId,
+      },
+      {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
     );
 
@@ -43,7 +69,10 @@ export const getAllOrdersByUserId = createAsyncThunk(
   "/order/getAllOrdersByUserId",
   async (userId) => {
     const response = await axios.get(
-      `${API_URL}/api/shop/order/list/${userId}`
+      `${import.meta.env.VITE_BACKEND_URL}/api/shop/orders/list/${userId}`,
+      {
+        withCredentials: true
+      }
     );
 
     return response.data;
@@ -54,7 +83,10 @@ export const getOrderDetails = createAsyncThunk(
   "/order/getOrderDetails",
   async (id) => {
     const response = await axios.get(
-      `${API_URL}/api/shop/order/details/${id}`
+      `${import.meta.env.VITE_BACKEND_URL}/api/shop/orders/details/${id}`,
+      {
+        withCredentials: true
+      }
     );
 
     return response.data;
@@ -67,26 +99,30 @@ const shoppingOrderSlice = createSlice({
   reducers: {
     resetOrderDetails: (state) => {
       state.orderDetails = null;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(createNewOrder.pending, (state) => {
         state.isLoading = true;
+        state.error = null;
       })
       .addCase(createNewOrder.fulfilled, (state, action) => {
         state.isLoading = false;
         state.approvalURL = action.payload.approvalURL;
         state.orderId = action.payload.orderId;
+        state.error = null;
         sessionStorage.setItem(
           "currentOrderId",
           JSON.stringify(action.payload.orderId)
         );
       })
-      .addCase(createNewOrder.rejected, (state) => {
+      .addCase(createNewOrder.rejected, (state, action) => {
         state.isLoading = false;
         state.approvalURL = null;
         state.orderId = null;
+        state.error = action.payload?.message || "Failed to create order";
       })
       .addCase(getAllOrdersByUserId.pending, (state) => {
         state.isLoading = true;
