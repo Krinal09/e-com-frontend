@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Dialog } from "../ui/dialog";
+import { Dialog, DialogTrigger } from "../ui/dialog";
 import {
   Table,
   TableBody,
@@ -18,26 +18,73 @@ import {
   resetOrderDetails,
 } from "@/store/shop/order-slice";
 import { Badge } from "../ui/badge";
+import { PackageOpen } from "lucide-react";
 
 function ShoppingOrders() {
-  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { orderList, orderDetails } = useSelector((state) => state.shopOrder);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  function handleFetchOrderDetails(getId) {
-    dispatch(getOrderDetails(getId));
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(getAllOrdersByUserId(user.id));
+    }
+  }, [dispatch, user?.id]);
+
+  if (!orderList || orderList.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Order History</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <PackageOpen className="h-16 w-16 text-muted-foreground mb-4" />
+          <p className="text-lg font-medium text-muted-foreground">No orders found</p>
+          <p className="text-sm text-muted-foreground">Start shopping to see your orders here</p>
+        </CardContent>
+      </Card>
+    );
   }
 
-  useEffect(() => {
-    dispatch(getAllOrdersByUserId(user?.id));
-  }, [dispatch]);
+  const handleViewDetails = (orderId) => {
+    setSelectedOrderId(orderId);
+    dispatch(getOrderDetails(orderId));
+    setIsDialogOpen(true);
+  };
 
-  useEffect(() => {
-    if (orderDetails !== null) setOpenDetailsDialog(true);
-  }, [orderDetails]);
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedOrderId(null);
+    dispatch(resetOrderDetails());
+  };
 
-  console.log(orderDetails, "orderDetails");
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'delivered':
+        return 'bg-green-500';
+      case 'processing':
+        return 'bg-blue-500';
+      case 'shipped':
+        return 'bg-yellow-500';
+      case 'cancelled':
+        return 'bg-red-600';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getPaymentStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'paid':
+        return 'bg-green-500';
+      case 'failed':
+        return 'bg-red-600';
+      default:
+        return 'bg-yellow-500';
+    }
+  };
 
   return (
     <Card>
@@ -51,7 +98,9 @@ function ShoppingOrders() {
               <TableHead>Order ID</TableHead>
               <TableHead>Order Date</TableHead>
               <TableHead>Order Status</TableHead>
-              <TableHead>Order Price</TableHead>
+              <TableHead>Payment Method</TableHead>
+              <TableHead>Payment Status</TableHead>
+              <TableHead>Total Amount</TableHead>
               <TableHead>
                 <span className="sr-only">Details</span>
               </TableHead>
@@ -60,39 +109,36 @@ function ShoppingOrders() {
           <TableBody>
             {orderList && orderList.length > 0
               ? orderList.map((orderItem) => (
-                  <TableRow>
-                    <TableCell>{orderItem?._id}</TableCell>
-                    <TableCell>{orderItem?.orderDate.split("T")[0]}</TableCell>
+                  <TableRow key={orderItem._id}>
+                    <TableCell className="font-medium">{orderItem?._id}</TableCell>
                     <TableCell>
-                      <Badge
-                        className={`py-1 px-3 ${
-                          orderItem?.orderStatus === "confirmed"
-                            ? "bg-green-500"
-                            : orderItem?.orderStatus === "rejected"
-                            ? "bg-red-600"
-                            : "bg-black"
-                        }`}
-                      >
-                        {orderItem?.orderStatus}
+                      {orderItem?.createdAt ? new Date(orderItem.createdAt).toLocaleDateString() : "Pending"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`${getStatusColor(orderItem?.orderStatus)}`}>
+                        {orderItem?.orderStatus || 'pending'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {orderItem?.paymentMethod || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`${getPaymentStatusColor(orderItem?.paymentStatus)}`}>
+                        {orderItem?.paymentStatus || 'pending'}
                       </Badge>
                     </TableCell>
                     <TableCell>₹{orderItem?.totalAmount}</TableCell>
                     <TableCell>
-                      <Dialog
-                        open={openDetailsDialog}
-                        onOpenChange={() => {
-                          setOpenDetailsDialog(false);
-                          dispatch(resetOrderDetails());
-                        }}
-                      >
-                        <Button
-                          onClick={() =>
-                            handleFetchOrderDetails(orderItem?._id)
-                          }
-                        >
-                          View Details
-                        </Button>
-                        <ShoppingOrderDetailsView orderDetails={orderDetails} />
+                      <Dialog open={isDialogOpen && selectedOrderId === orderItem._id} onOpenChange={(open) => {
+                        if (!open) handleCloseDialog();
+                        else handleViewDetails(orderItem._id);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">View Details</Button>
+                        </DialogTrigger>
+                        {selectedOrderId === orderItem._id && orderDetails && (
+                          <ShoppingOrderDetailsView orderDetails={orderDetails} />
+                        )}
                       </Dialog>
                     </TableCell>
                   </TableRow>
