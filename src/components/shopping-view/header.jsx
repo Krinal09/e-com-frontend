@@ -108,10 +108,18 @@ function HeaderRightContent() {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Avatar className="bg-black">
-            <AvatarFallback className="bg-black text-white font-extrabold">
-              {user?.userName[0].toUpperCase()}
-            </AvatarFallback>
+          <Avatar className="bg-black" key={user?.profileImage}>
+            {user?.profileImage ? (
+              <img
+                src={user.profileImage}
+                alt={user.userName}
+                className="w-full h-full object-cover rounded-full"
+              />
+            ) : (
+              <AvatarFallback className="bg-black text-white font-extrabold">
+                {user?.userName?.[0]?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            )}
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" className="w-56">
