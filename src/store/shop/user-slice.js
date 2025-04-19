@@ -8,7 +8,7 @@ export const fetchAllUsers = createAsyncThunk(
   "users/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/api/users`);
+      const response = await axios.get(`/api/users`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
