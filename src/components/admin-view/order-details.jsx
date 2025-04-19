@@ -1,142 +1,121 @@
-import { useState } from "react";
-import CommonForm from "../common/form";
-import { DialogContent } from "../ui/dialog";
+import { DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { Badge } from "../ui/badge";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  getAllOrdersForAdmin,
-  getOrderDetailsForAdmin,
-  updateOrderStatus,
-} from "@/store/admin/order-slice";
-import { useToast } from "../ui/use-toast";
-
-const initialFormData = {
-  status: "",
-};
+import { ScrollArea } from "../ui/scroll-area";
 
 function AdminOrderDetailsView({ orderDetails }) {
-  const [formData, setFormData] = useState(initialFormData);
-  const { user } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
-  const { toast } = useToast();
-
-  console.log(orderDetails, "orderDetailsorderDetails");
-
-  function handleUpdateStatus(event) {
-    event.preventDefault();
-    const { status } = formData;
-
-    dispatch(
-      updateOrderStatus({ id: orderDetails?._id, orderStatus: status })
-    ).then((data) => {
-      if (data?.payload?.success) {
-        dispatch(getOrderDetailsForAdmin(orderDetails?._id));
-        dispatch(getAllOrdersForAdmin());
-        setFormData(initialFormData);
-        toast({
-          title: data?.payload?.message,
-        });
-      }
-    });
-  }
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return "Pending";
+    }
+  };
 
   return (
-    <DialogContent className="sm:max-w-[600px]">
-      <div className="grid gap-6">
-        <div className="grid gap-2">
-          <div className="flex mt-6 items-center justify-between">
-            <p className="font-medium">Order ID</p>
-            <Label>{orderDetails?._id}</Label>
+    <DialogContent className="max-w-[600px] max-h-[90vh] overflow-hidden">
+      <DialogHeader>
+        <DialogTitle>Order Details</DialogTitle>
+      </DialogHeader>
+      <ScrollArea className="h-[calc(90vh-8rem)]">
+        <div className="space-y-6 pr-6">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="font-medium">Order ID</p>
+              <Label>{orderDetails?._id}</Label>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="font-medium">Order Date</p>
+              <Label>{formatDate(orderDetails?.createdAt)}</Label>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="font-medium">Order Price</p>
+              <Label>₹{orderDetails?.totalAmount}</Label>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="font-medium">Payment Method</p>
+              <Label>
+                <Badge variant="outline">
+                  {orderDetails?.paymentMethod?.toUpperCase() || "ONLINE"}
+                </Badge>
+              </Label>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="font-medium">Payment Status</p>
+              <Label>
+                <Badge
+                  className={`${
+                    orderDetails?.paymentStatus === "completed"
+                      ? "bg-green-500"
+                      : orderDetails?.paymentStatus === "failed"
+                      ? "bg-red-600"
+                      : "bg-yellow-500"
+                  }`}
+                >
+                  {orderDetails?.paymentStatus || "pending"}
+                </Badge>
+              </Label>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="font-medium">Order Status</p>
+              <Label>
+                <Badge
+                  className={`py-1 px-3 ${
+                    orderDetails?.orderStatus === "delivered"
+                      ? "bg-green-500"
+                      : orderDetails?.orderStatus === "cancelled"
+                      ? "bg-red-600"
+                      : orderDetails?.orderStatus === "processing"
+                      ? "bg-blue-500"
+                      : orderDetails?.orderStatus === "shipped"
+                      ? "bg-yellow-500"
+                      : "bg-black"
+                  }`}
+                >
+                  {orderDetails?.orderStatus}
+                </Badge>
+              </Label>
+            </div>
           </div>
-          <div className="flex mt-2 items-center justify-between">
-            <p className="font-medium">Order Date</p>
-            <Label>{orderDetails?.orderDate.split("T")[0]}</Label>
+          <Separator />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="font-medium">Order Details</div>
+              <ul className="space-y-3">
+                {orderDetails?.cartItems && orderDetails?.cartItems.length > 0
+                  ? orderDetails?.cartItems.map((item, index) => (
+                      <li key={index} className="flex items-center justify-between">
+                        <span>Title: {item.productId?.title}</span>
+                        <span>Quantity: {item.quantity}</span>
+                        <span>Price: ₹{item.price}</span>
+                      </li>
+                    ))
+                  : null}
+              </ul>
+            </div>
           </div>
-          <div className="flex mt-2 items-center justify-between">
-            <p className="font-medium">Order Price</p>
-            <Label>₹{orderDetails?.totalAmount}</Label>
-          </div>
-          <div className="flex mt-2 items-center justify-between">
-            <p className="font-medium">Payment method</p>
-            <Label>{orderDetails?.paymentMethod}</Label>
-          </div>
-          <div className="flex mt-2 items-center justify-between">
-            <p className="font-medium">Payment Status</p>
-            <Label>{orderDetails?.paymentStatus}</Label>
-          </div>
-          <div className="flex mt-2 items-center justify-between">
-            <p className="font-medium">Order Status</p>
-            <Label>
-              <Badge
-                className={`py-1 px-3 ${
-                  orderDetails?.orderStatus === "confirmed"
-                    ? "bg-green-500"
-                    : orderDetails?.orderStatus === "rejected"
-                    ? "bg-red-600"
-                    : "bg-black"
-                }`}
-              >
-                {orderDetails?.orderStatus}
-              </Badge>
-            </Label>
-          </div>
-        </div>
-        <Separator />
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <div className="font-medium">Order Details</div>
-            <ul className="grid gap-3">
-              {orderDetails?.cartItems && orderDetails?.cartItems.length > 0
-                ? orderDetails?.cartItems.map((item) => (
-                    <li className="flex items-center justify-between">
-                      <span>Title: {item.title}</span>
-                      <span>Quantity: {item.quantity}</span>
-                      <span>Price: ₹{item.price}</span>
-                    </li>
-                  ))
-                : null}
-            </ul>
-          </div>
-        </div>
-        <div className="grid gap-4">
-          <div className="grid gap-2">
+          <Separator />
+          <div className="space-y-2">
             <div className="font-medium">Shipping Info</div>
-            <div className="grid gap-0.5 text-muted-foreground">
-              <span>{user.userName}</span>
-              <span>{orderDetails?.addressInfo?.address}</span>
-              <span>{orderDetails?.addressInfo?.city}</span>
-              <span>{orderDetails?.addressInfo?.pincode}</span>
-              <span>{orderDetails?.addressInfo?.phone}</span>
-              <span>{orderDetails?.addressInfo?.notes}</span>
+            <div className="space-y-1 text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-foreground">Customer:</span>
+                <span className="font-medium">
+                  {orderDetails?.customerName}
+                </span>
+              </div>
+              <span className="block">{orderDetails?.addressInfo?.address}</span>
+              <span className="block">{orderDetails?.addressInfo?.city}</span>
+              <span className="block">{orderDetails?.addressInfo?.pincode}</span>
+              <span className="block">{orderDetails?.addressInfo?.phone}</span>
+              {orderDetails?.addressInfo?.notes && (
+                <span className="block">{orderDetails?.addressInfo?.notes}</span>
+              )}
             </div>
           </div>
         </div>
-
-        <div>
-          <CommonForm
-            formControls={[
-              {
-                label: "Order Status",
-                name: "status",
-                componentType: "select",
-                options: [
-                  { id: "pending", label: "Pending" },
-                  { id: "inProcess", label: "In Process" },
-                  { id: "inShipping", label: "In Shipping" },
-                  { id: "delivered", label: "Delivered" },
-                  { id: "rejected", label: "Rejected" },
-                ],
-              },
-            ]}
-            formData={formData}
-            setFormData={setFormData}
-            buttonText={"Update Order Status"}
-            onSubmit={handleUpdateStatus}
-          />
-        </div>
-      </div>
+      </ScrollArea>
     </DialogContent>
   );
 }
