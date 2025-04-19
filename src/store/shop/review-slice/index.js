@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
 const initialState = {
   isLoading: false,
   reviews: [],
@@ -12,7 +14,7 @@ export const addReview = createAsyncThunk(
   async (formData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/shop/reviews/add`,
+        `${API_URL}/api/shop/reviews/add`,
         formData
       );
       return response.data;
@@ -29,15 +31,15 @@ export const getReviews = createAsyncThunk(
       if (!productId) {
         throw new Error("Product ID is required");
       }
-      
+
       const response = await axios.get(
-        `http://localhost:5000/api/shop/reviews/${productId}`
+        `${API_URL}/api/shop/reviews/${productId}`
       );
-      
+
       if (!response.data.success) {
         throw new Error(response.data.message || "Failed to fetch reviews");
       }
-      
+
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message || "Failed to fetch reviews" });
