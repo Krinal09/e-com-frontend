@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { fetchAllOrders } from "@/store/admin/orders-slice";
+import { getAllOrdersForAdmin } from "@/store/admin/order-slice";
 import { fetchAllUsers } from "@/store/admin/users-slice";
 import { fetchAllProducts } from "@/store/admin/products-slice";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,18 +45,15 @@ const AdminDashboard = () => {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const { user } = useSelector((state) => state.auth);
 
-  // Add default empty arrays to prevent undefined errors
-  const { orderList = [], loading: ordersLoading } = useSelector(
-    (state) => state.adminOrders || {},
-    (prev, next) => prev.orderList === next.orderList && prev.loading === next.loading
+  // Get order data from admin order slice
+  const { orderList = [], isLoading: ordersLoading } = useSelector(
+    (state) => state.adminOrder || {}
   );
   const { userList = [], loading: usersLoading } = useSelector(
-    (state) => state.adminUsers || {},
-    (prev, next) => prev.userList === next.userList && prev.loading === next.loading
+    (state) => state.adminUsers || {}
   );
   const { productList = [], loading: productsLoading } = useSelector(
-    (state) => state.adminProducts || {},
-    (prev, next) => prev.productList === next.productList && prev.loading === next.loading
+    (state) => state.adminProducts || {}
   );
 
   // Calculate dashboard metrics
@@ -107,7 +104,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (user?.role === "admin") {
-      dispatch(fetchAllOrders());
+      dispatch(getAllOrdersForAdmin());
       dispatch(fetchAllUsers());
       dispatch(fetchAllProducts());
     }
@@ -119,7 +116,7 @@ const AdminDashboard = () => {
       try {
         await Promise.all([
           dispatch(fetchAllProducts()).unwrap(),
-          dispatch(fetchAllOrders()).unwrap(),
+          dispatch(getAllOrdersForAdmin()).unwrap(),
           dispatch(fetchAllUsers()).unwrap(),
         ]);
         setLastUpdate(new Date());
@@ -300,37 +297,41 @@ const AdminDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {orderColumns.map((column) => (
-                    <TableHead key={`order-header-${column.accessorKey}`}>
-                      {column.header}
-                    </TableHead>
-                  ))}
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orderList.slice(0, 5).map((order) => (
+                {orderList
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .slice(0, 5)
+                  .map((order) => (
                   <TableRow key={`order-row-${order._id}`}>
-                    {orderColumns.map((column) => (
-                      <TableCell key={`order-cell-${order._id}-${column.accessorKey}`}>
-                        {column.cell
-                          ? column.cell({ row: { original: order } })
-                          : order[column.accessorKey]}
-                      </TableCell>
-                    ))}
+                    <TableCell>{order.customerName}</TableCell>
+                    <TableCell>₹{order.totalAmount}</TableCell>
+                    <TableCell>
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "Pending"}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {orderList.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={orderColumns.length}
-                      className="text-center py-4"
-                    >
+                    <TableCell colSpan={3} className="text-center py-4">
                       No orders found
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+            <div className="mt-4 flex justify-end">
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/admin/orders')}
+              >
+                View All Orders
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
