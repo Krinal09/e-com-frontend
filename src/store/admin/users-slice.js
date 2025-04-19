@@ -1,14 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-
 export const fetchAllUsers = createAsyncThunk(
   "users/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${API_URL}/api/admin/users`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users`,
         { withCredentials: true }
       );
       return response.data;
@@ -23,7 +21,7 @@ export const updateUserStatus = createAsyncThunk(
   async ({ userId, status }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${API_URL}/api/admin/users/${userId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`,
         { status },
         { withCredentials: true }
       );
