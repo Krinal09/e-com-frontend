@@ -27,7 +27,6 @@ function createSearchParamsHelper(filterParams) {
   for (const [key, value] of Object.entries(filterParams)) {
     if (Array.isArray(value) && value.length > 0) {
       const paramValue = value.join(",");
-
       queryParams.push(`${key}=${encodeURIComponent(paramValue)}`);
     }
   }
@@ -51,6 +50,8 @@ function ShoppingListing() {
   const { toast } = useToast();
 
   const categorySearchParam = searchParams.get("category");
+
+  console.log("Listing - User:", user, "User ID:", user?.id);
 
   function handleSort(value) {
     setSort(value);
@@ -79,7 +80,7 @@ function ShoppingListing() {
   }
 
   function handleGetProductDetails(getCurrentProductId) {
-    console.log(getCurrentProductId);
+    console.log("Fetching product details for ID:", getCurrentProductId);
     dispatch(fetchProductDetails(getCurrentProductId));
   }
 
@@ -92,8 +93,8 @@ function ShoppingListing() {
       return;
     }
 
-    const existingItem = cartItems.find(
-      (item) => item.productId === getCurrentProductId
+    const existingItem = cartItems?.items?.find(
+      (item) => item.productId._id === getCurrentProductId
     );
 
     if (existingItem) {
@@ -115,7 +116,6 @@ function ShoppingListing() {
     )
       .unwrap()
       .then(() => {
-        dispatch(fetchCartItems(user.id));
         toast({
           title: "Product added to cart",
         });
@@ -151,7 +151,13 @@ function ShoppingListing() {
     if (productDetails !== null) setOpenDetailsDialog(true);
   }, [productDetails]);
 
-  console.log(productList, "productListproductListproductList");
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(fetchCartItems(user.id));
+    }
+  }, [user?.id, dispatch]);
+
+  console.log("Product List:", productList);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6 p-4 md:p-6">
@@ -190,15 +196,20 @@ function ShoppingListing() {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-          {productList && productList.length > 0
-            ? productList.map((productItem) => (
-                <ShoppingProductTile
-                  handleGetProductDetails={handleGetProductDetails}
-                  product={productItem}
-                  handleAddtoCart={handleAddtoCart}
-                />
-              ))
-            : null}
+          {productList && productList.length > 0 ? (
+            productList.map((product) => (
+              <ShoppingProductTile
+                key={product._id}
+                product={product}
+                onClickDetails={() => handleGetProductDetails(product._id)}
+                onClickAddToCart={() => handleAddtoCart(product._id, product.totalStock)}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8">
+              <p className="text-muted-foreground">No products found</p>
+            </div>
+          )}
         </div>
       </div>
       <ProductDetailsDialog
