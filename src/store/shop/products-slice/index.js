@@ -1,25 +1,30 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-
 const initialState = {
   isLoading: false,
   productList: [],
   productDetails: null,
+  pagination: {
+    total: 0,
+    page: 1,
+    pages: 1
+  }
 };
 
 // For filtered products (customer view)
 export const fetchAllFilteredProducts = createAsyncThunk(
   "/products/fetchAllFilteredProducts",
-  async ({ filterParams, sortParams }) => {
+  async ({ filterParams, sortParams, page = 1, limit = 12 }) => {
     const query = new URLSearchParams({
       ...filterParams,
       sortBy: sortParams,
+      page,
+      limit
     });
 
     const result = await axios.get(
-      `${API_URL}/api/shop/products/get?${query}`
+      `http://localhost:5000/api/shop/products/get?${query}`
     );
 
     return result?.data;
@@ -31,7 +36,7 @@ export const fetchProductDetails = createAsyncThunk(
   "/products/fetchProductDetails",
   async (id) => {
     const result = await axios.get(
-      `${API_URL}/api/shop/products/get/${id}`
+      `http://localhost:5000/api/shop/products/get/${id}`
     );
     return result?.data;
   }
@@ -41,7 +46,7 @@ export const fetchProductDetails = createAsyncThunk(
 export const fetchAllProducts = createAsyncThunk(
   "/products/fetchAllAdminProducts",
   async () => {
-    const result = await axios.get(`${API_URL}/api/admin/products`);
+    const result = await axios.get("http://localhost:5000/api/admin/products");
     return result?.data;
   }
 );
@@ -53,6 +58,9 @@ const shoppingProductSlice = createSlice({
     setProductDetails: (state) => {
       state.productDetails = null;
     },
+    setCurrentPage: (state, action) => {
+      state.pagination.page = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -62,10 +70,12 @@ const shoppingProductSlice = createSlice({
       .addCase(fetchAllFilteredProducts.fulfilled, (state, action) => {
         state.isLoading = false;
         state.productList = action.payload.data;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchAllFilteredProducts.rejected, (state) => {
         state.isLoading = false;
         state.productList = [];
+        state.pagination = initialState.pagination;
       })
       .addCase(fetchProductDetails.pending, (state) => {
         state.isLoading = true;
@@ -78,7 +88,6 @@ const shoppingProductSlice = createSlice({
         state.isLoading = false;
         state.productDetails = null;
       })
-      // 🔧 Extra reducers for admin fetchAllProducts
       .addCase(fetchAllProducts.pending, (state) => {
         state.isLoading = true;
       })
@@ -93,6 +102,6 @@ const shoppingProductSlice = createSlice({
   },
 });
 
-export const { setProductDetails } = shoppingProductSlice.actions;
+export const { setProductDetails, setCurrentPage } = shoppingProductSlice.actions;
 
 export default shoppingProductSlice.reducer;
