@@ -1,23 +1,21 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
 const initialState = {
   isAuthenticated: false,
   isLoading: true,
   user: null,
-  error: null, 
+  error: null,
 };
 
 export const registerUser = createAsyncThunk(
   "/auth/register",
   async (formData) => {
-    const response = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
-      formData,
-      {
-        withCredentials: true,
-      }
-    );
+    const response = await axios.post(`${API_URL}/api/auth/register`, formData, {
+      withCredentials: true,
+    });
     return response.data;
   }
 );
@@ -25,13 +23,9 @@ export const registerUser = createAsyncThunk(
 export const loginUser = createAsyncThunk(
   "/auth/login",
   async (formData) => {
-    const response = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
-      formData,
-      {
-        withCredentials: true,
-      }
-    );
+    const response = await axios.post(`${API_URL}/api/auth/login`, formData, {
+      withCredentials: true,
+    });
     return response.data;
   }
 );
@@ -39,32 +33,22 @@ export const loginUser = createAsyncThunk(
 export const logoutUser = createAsyncThunk(
   "/auth/logout",
   async () => {
-    const response = await axios.post(
-      `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
-      {},
-      {
-        withCredentials: true,
-      }
-    );
+    const response = await axios.post(`${API_URL}/api/auth/logout`, {}, {
+      withCredentials: true,
+    });
     return response.data;
   }
 );
 
 export const checkAuth = createAsyncThunk(
   "/auth/checkauth",
-
   async () => {
-    const response = await axios.get(
-      "http://localhost:5000/api/auth/check-auth",
-      {
-        withCredentials: true,
-        headers: {
-          "Cache-Control":
-            "no-store, no-cache, must-revalidate, proxy-revalidate",
-        },
-      }
-    );
-
+    const response = await axios.get(`${API_URL}/api/auth/check-auth`, {
+      withCredentials: true,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    });
     return response.data;
   }
 );
@@ -73,11 +57,12 @@ export const updateUserProfile = createAsyncThunk(
   "auth/updateUserProfile",
   async ({ userName, profileImage }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/profile`,
-        { userName, profileImage },
-        { withCredentials: true }
-      );
+      const response = await axios.put(`${API_URL}/api/auth/profile`, {
+        userName,
+        profileImage,
+      }, {
+        withCredentials: true,
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Profile update failed" });
@@ -89,10 +74,9 @@ export const deleteUserAccount = createAsyncThunk(
   "auth/deleteUserAccount",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/profile`,
-        { withCredentials: true }
-      );
+      const response = await axios.delete(`${API_URL}/api/auth/profile`, {
+        withCredentials: true,
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Account deletion failed" });
@@ -104,11 +88,12 @@ export const changePassword = createAsyncThunk(
   "auth/changePassword",
   async ({ oldPassword, newPassword }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/auth/change-password`,
-        { oldPassword, newPassword },
-        { withCredentials: true }
-      );
+      const response = await axios.put(`${API_URL}/api/auth/change-password`, {
+        oldPassword,
+        newPassword,
+      }, {
+        withCredentials: true,
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Password change failed" });
@@ -191,7 +176,7 @@ const authSlice = createSlice({
             profileImage: action.payload.user.profileImage,
             email: action.payload.user.email,
             role: action.payload.user.role,
-            id: action.payload.user.id
+            id: action.payload.user.id,
           };
         }
       })
