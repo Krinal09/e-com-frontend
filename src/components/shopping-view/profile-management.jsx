@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { changePassword, deleteUserAccount, updateUserProfile } from "@/store/auth-slice";
+import { FileIcon, UploadCloudIcon, XIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import axios from "axios";
 
 function ProfileManagement() {
   const dispatch = useDispatch();
@@ -15,6 +18,9 @@ function ProfileManagement() {
 
   const [userName, setUserName] = useState("");
   const [profileImage, setProfileImage] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [imageLoadingState, setImageLoadingState] = useState(false);
+  const inputRef = useRef(null);
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -25,6 +31,58 @@ function ProfileManagement() {
       setProfileImage(user.profileImage || "");
     }
   }, [user]);
+
+  function handleImageFileChange(event) {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) setImageFile(selectedFile);
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault();
+  }
+
+  function handleDrop(event) {
+    event.preventDefault();
+    const droppedFile = event.dataTransfer.files?.[0];
+    if (droppedFile) setImageFile(droppedFile);
+  }
+
+  function handleRemoveImage() {
+    setImageFile(null);
+    setProfileImage("");
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  }
+
+  async function uploadImageToCloudinary() {
+    setImageLoadingState(true);
+    const data = new FormData();
+    data.append("my_file", imageFile);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/admin/products/upload-image`,
+        data
+      );
+
+      if (response?.data?.success) {
+        setProfileImage(response.data.result.url);
+        setImageLoadingState(false);
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      setImageLoadingState(false);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  useEffect(() => {
+    if (imageFile !== null) uploadImageToCloudinary();
+  }, [imageFile]);
 
   const handleProfileUpdate = async () => {
     const result = await dispatch(updateUserProfile({ userName, profileImage }));
@@ -89,17 +147,56 @@ function ProfileManagement() {
           <Label>User Name</Label>
           <Input value={userName} onChange={(e) => setUserName(e.target.value)} />
         </div>
-        <div>
-          <Label>Profile Image URL</Label>
-          <Input value={profileImage} onChange={(e) => setProfileImage(e.target.value)} />
+        <div className="w-full mt-4">
+          <Label className="text-lg font-semibold mb-2 block">Profile Picture</Label>
+          <div
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className="border-2 border-dashed rounded-lg p-4"
+          >
+            <Input
+              id="image-upload"
+              type="file"
+              className="hidden"
+              ref={inputRef}
+              onChange={handleImageFileChange}
+            />
+            {!imageFile && !profileImage ? (
+              <Label
+                htmlFor="image-upload"
+                className="flex flex-col items-center justify-center h-32 cursor-pointer"
+              >
+                <UploadCloudIcon className="w-10 h-10 text-muted-foreground mb-2" />
+                <span>Drag & drop or click to upload image</span>
+              </Label>
+            ) : imageLoadingState ? (
+              <Skeleton className="h-10 bg-gray-100" />
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  {profileImage && (
+                    <img
+                      src={profileImage}
+                      alt="Profile Preview"
+                      className="w-16 h-16 rounded-full object-cover mr-4"
+                    />
+                  )}
+                  <FileIcon className="w-8 text-primary mr-2 h-8" />
+                  <p className="text-sm font-medium">{imageFile?.name || "Current Profile Picture"}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={handleRemoveImage}
+                >
+                  <XIcon className="w-4 h-4" />
+                  <span className="sr-only">Remove File</span>
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-        {profileImage && (
-          <img
-            src={profileImage}
-            alt="Profile Preview"
-            className="w-24 h-24 rounded-full object-cover"
-          />
-        )}
         <Button onClick={handleProfileUpdate} disabled={isLoading}>
           {isLoading ? "Updating..." : "Update Profile"}
         </Button>
