@@ -1,8 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
-
 const initialState = {
   isAuthenticated: false,
   isLoading: true,
@@ -14,7 +12,7 @@ export const registerUser = createAsyncThunk(
   "/auth/register",
   async (formData) => {
     const response = await axios.post(
-      `${API_URL}/api/auth/register`,
+      `${import.meta.env.VITE_BACKEND_URL}/api/auth/register`,
       formData,
       {
         withCredentials: true,
@@ -28,7 +26,7 @@ export const loginUser = createAsyncThunk(
   "/auth/login",
   async (formData) => {
     const response = await axios.post(
-      `${API_URL}/api/auth/login`,
+      `${import.meta.env.VITE_BACKEND_URL}/api/auth/login`,
       formData,
       {
         withCredentials: true,
@@ -42,7 +40,7 @@ export const logoutUser = createAsyncThunk(
   "/auth/logout",
   async () => {
     const response = await axios.post(
-      `${API_URL}/api/auth/logout`,
+      `${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`,
       {},
       {
         withCredentials: true,
@@ -54,16 +52,19 @@ export const logoutUser = createAsyncThunk(
 
 export const checkAuth = createAsyncThunk(
   "/auth/checkauth",
+
   async () => {
     const response = await axios.get(
-      `${API_URL}/api/auth/check-auth`,
+      "http://localhost:5000/api/auth/check-auth",
       {
         withCredentials: true,
         headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
         },
       }
     );
+
     return response.data;
   }
 );
@@ -73,7 +74,7 @@ export const updateUserProfile = createAsyncThunk(
   async ({ userName, profileImage }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${API_URL}/api/auth/profile`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/profile`,
         { userName, profileImage },
         { withCredentials: true }
       );
@@ -89,7 +90,7 @@ export const deleteUserAccount = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.delete(
-        `${API_URL}/api/auth/profile`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/profile`,
         { withCredentials: true }
       );
       return response.data;
@@ -104,7 +105,7 @@ export const changePassword = createAsyncThunk(
   async ({ oldPassword, newPassword }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${API_URL}/api/auth/change-password`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/change-password`,
         { oldPassword, newPassword },
         { withCredentials: true }
       );
@@ -136,7 +137,7 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload?.message || "Registration failed due to server timeout or connection issue";
+        state.error = action.payload.message;
       })
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
@@ -184,7 +185,14 @@ const authSlice = createSlice({
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         if (action.payload.success) {
-          state.user = { ...state.user, ...action.payload.user };
+          state.user = {
+            ...state.user,
+            userName: action.payload.user.userName,
+            profileImage: action.payload.user.profileImage,
+            email: action.payload.user.email,
+            role: action.payload.user.role,
+            id: action.payload.user.id
+          };
         }
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
