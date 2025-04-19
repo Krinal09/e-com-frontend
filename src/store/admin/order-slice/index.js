@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
 const initialState = {
   orderList: [],
   orderDetails: null,
@@ -12,17 +14,13 @@ export const getAllOrdersForAdmin = createAsyncThunk(
   "/order/getAllOrdersForAdmin",
   async (_, { rejectWithValue }) => {
     try {
-      // Log the request for debugging
       console.log("Fetching orders...");
-      
+
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/get`,
-        {
-          withCredentials: true
-        }
+        `${API_URL}/api/admin/orders/get`,
+        { withCredentials: true }
       );
 
-      // Log the response for debugging
       console.log("Orders response:", response.data);
 
       if (!response.data.success) {
@@ -41,17 +39,13 @@ export const getOrderDetailsForAdmin = createAsyncThunk(
   "/order/getOrderDetailsForAdmin",
   async (id, { rejectWithValue }) => {
     try {
-      // Log the request for debugging
       console.log("Fetching order details for ID:", id);
 
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/details/${id}`,
-        {
-          withCredentials: true
-        }
+        `${API_URL}/api/admin/orders/details/${id}`,
+        { withCredentials: true }
       );
 
-      // Log the response for debugging
       console.log("Order details response:", response.data);
 
       if (!response.data.success) {
@@ -71,14 +65,9 @@ export const updateOrderStatus = createAsyncThunk(
   async ({ id, orderStatus, paymentStatus }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/update/${id}`,
-        {
-          orderStatus,
-          paymentStatus
-        },
-        {
-          withCredentials: true
-        }
+        `${API_URL}/api/admin/orders/update/${id}`,
+        { orderStatus, paymentStatus },
+        { withCredentials: true }
       );
 
       if (!response.data.success) {
@@ -97,7 +86,7 @@ export const updatePaymentStatus = createAsyncThunk(
   async ({ id, paymentStatus }, { rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/admin/orders/payment-status/${id}`,
+        `${API_URL}/api/admin/orders/payment-status/${id}`,
         { paymentStatus },
         { withCredentials: true }
       );
@@ -130,19 +119,12 @@ const adminOrderSlice = createSlice({
       })
       .addCase(getAllOrdersForAdmin.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Transform and normalize the data
         state.orderList = action.payload.data.map(order => {
-          // Log each order for debugging
-          console.log("Processing order:", order);
-          
-          const customerName = order.user?.userName || 
-                             order.userId?.userName || 
-                             order.addressInfo?.name || 
-                             'N/A';
-          
-          // Log the extracted customer name
-          console.log("Extracted customer name:", customerName);
-          
+          const customerName = order.user?.userName ||
+                               order.userId?.userName ||
+                               order.addressInfo?.name ||
+                               'N/A';
+
           return {
             ...order,
             customerName,
@@ -164,14 +146,13 @@ const adminOrderSlice = createSlice({
       })
       .addCase(getOrderDetailsForAdmin.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Transform and normalize the data
         const orderData = action.payload.data;
         state.orderDetails = {
           ...orderData,
-          customerName: orderData.user?.userName || 
-                       orderData.userId?.userName || 
-                       orderData.addressInfo?.name || 
-                       'N/A',
+          customerName: orderData.user?.userName ||
+                        orderData.userId?.userName ||
+                        orderData.addressInfo?.name ||
+                        'N/A',
           orderStatus: orderData.orderStatus || 'pending',
           paymentStatus: orderData.paymentStatus || 'pending',
           paymentMethod: orderData.paymentMethod || 'ONLINE'
