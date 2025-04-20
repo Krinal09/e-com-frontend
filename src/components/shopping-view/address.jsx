@@ -139,6 +139,7 @@ function Address({ setCurrentSelectedAddress, selectedId }) {
           buttonText={currentEditedId !== null ? "Edit" : "Add"}
           onSubmit={handleManageAddress}
           isBtnDisabled={!isFormValid()}
+          buttonClassName={currentEditedId !== null ? "bg-green-600 hover:bg-green-700" : "bg-primary hover:bg-primary/90"}
         />
       </CardContent>
     </Card>
