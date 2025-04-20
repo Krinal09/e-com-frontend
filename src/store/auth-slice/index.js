@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+// Centralized backend base URL
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const initialState = {
   isAuthenticated: false,
@@ -13,9 +14,13 @@ const initialState = {
 export const registerUser = createAsyncThunk(
   "/auth/register",
   async (formData) => {
-    const response = await axios.post(`${API_URL}/api/auth/register`, formData, {
-      withCredentials: true,
-    });
+    const response = await axios.post(
+      `${BASE_URL}/api/auth/register`,
+      formData,
+      {
+        withCredentials: true,
+      }
+    );
     return response.data;
   }
 );
@@ -23,9 +28,13 @@ export const registerUser = createAsyncThunk(
 export const loginUser = createAsyncThunk(
   "/auth/login",
   async (formData) => {
-    const response = await axios.post(`${API_URL}/api/auth/login`, formData, {
-      withCredentials: true,
-    });
+    const response = await axios.post(
+      `${BASE_URL}/api/auth/login`,
+      formData,
+      {
+        withCredentials: true,
+      }
+    );
     return response.data;
   }
 );
@@ -33,9 +42,13 @@ export const loginUser = createAsyncThunk(
 export const logoutUser = createAsyncThunk(
   "/auth/logout",
   async () => {
-    const response = await axios.post(`${API_URL}/api/auth/logout`, {}, {
-      withCredentials: true,
-    });
+    const response = await axios.post(
+      `${BASE_URL}/api/auth/logout`,
+      {},
+      {
+        withCredentials: true,
+      }
+    );
     return response.data;
   }
 );
@@ -43,12 +56,15 @@ export const logoutUser = createAsyncThunk(
 export const checkAuth = createAsyncThunk(
   "/auth/checkauth",
   async () => {
-    const response = await axios.get(`${API_URL}/api/auth/check-auth`, {
-      withCredentials: true,
-      headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-      },
-    });
+    const response = await axios.get(
+      `${BASE_URL}/api/auth/check-auth`,
+      {
+        withCredentials: true,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
     return response.data;
   }
 );
@@ -57,12 +73,11 @@ export const updateUserProfile = createAsyncThunk(
   "auth/updateUserProfile",
   async ({ userName, profileImage }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_URL}/api/auth/profile`, {
-        userName,
-        profileImage,
-      }, {
-        withCredentials: true,
-      });
+      const response = await axios.put(
+        `${BASE_URL}/api/auth/profile`,
+        { userName, profileImage },
+        { withCredentials: true }
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Profile update failed" });
@@ -74,9 +89,10 @@ export const deleteUserAccount = createAsyncThunk(
   "auth/deleteUserAccount",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(`${API_URL}/api/auth/profile`, {
-        withCredentials: true,
-      });
+      const response = await axios.delete(
+        `${BASE_URL}/api/auth/profile`,
+        { withCredentials: true }
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Account deletion failed" });
@@ -88,15 +104,30 @@ export const changePassword = createAsyncThunk(
   "auth/changePassword",
   async ({ oldPassword, newPassword }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_URL}/api/auth/change-password`, {
-        oldPassword,
-        newPassword,
-      }, {
-        withCredentials: true,
-      });
+      const response = await axios.put(
+        `${BASE_URL}/api/auth/change-password`,
+        { oldPassword, newPassword },
+        { withCredentials: true }
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: "Password change failed" });
+    }
+  }
+);
+
+export const updateProfilePicture = createAsyncThunk(
+  "auth/updateProfilePicture",
+  async (profileImage, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(
+        `${BASE_URL}/api/auth/profile`,
+        { profileImage },
+        { withCredentials: true }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { message: "Profile picture update failed" });
     }
   }
 );
@@ -130,8 +161,19 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.success ? action.payload.user : null;
-        state.isAuthenticated = action.payload.success;
+        if (action.payload.success) {
+          state.user = {
+            ...action.payload.user,
+            profileImage: action.payload.user.profileImage || localStorage.getItem('profileImage') || ""
+          };
+          if (action.payload.user.profileImage) {
+            localStorage.setItem('profileImage', action.payload.user.profileImage);
+          }
+          state.isAuthenticated = true;
+        } else {
+          state.user = null;
+          state.isAuthenticated = false;
+        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -142,8 +184,26 @@ const authSlice = createSlice({
       })
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user || null;
-        state.isAuthenticated = !!action.payload.user;
+        if (action.payload.success && action.payload.user) {
+          const storedProfileImage = localStorage.getItem('profileImage');
+          
+          state.user = {
+            id: action.payload.user.id,
+            userName: action.payload.user.userName,
+            email: action.payload.user.email,
+            role: action.payload.user.role,
+            profileImage: action.payload.user.profileImage || storedProfileImage || ""
+          };
+          
+          if (action.payload.user.profileImage) {
+            localStorage.setItem('profileImage', action.payload.user.profileImage);
+          }
+          
+          state.isAuthenticated = true;
+        } else {
+          state.user = null;
+          state.isAuthenticated = false;
+        }
       })
       .addCase(checkAuth.rejected, (state) => {
         state.isLoading = false;
@@ -172,17 +232,14 @@ const authSlice = createSlice({
         if (action.payload.success) {
           state.user = {
             ...state.user,
-            userName: action.payload.user.userName,
-            profileImage: action.payload.user.profileImage,
-            email: action.payload.user.email,
-            role: action.payload.user.role,
-            id: action.payload.user.id,
+            ...action.payload.user
           };
         }
+        state.error = null;
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message || "Failed to update profile";
       })
       .addCase(deleteUserAccount.pending, (state) => {
         state.isLoading = true;
@@ -210,6 +267,27 @@ const authSlice = createSlice({
       .addCase(changePassword.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload.message;
+      })
+      .addCase(updateProfilePicture.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload.success) {
+          const currentUser = state.user;
+          const newProfileImage = action.payload.user.profileImage;
+          
+          state.user = {
+            ...currentUser,
+            profileImage: newProfileImage || currentUser?.profileImage || ""
+          };
+          
+          if (newProfileImage) {
+            localStorage.setItem('profileImage', newProfileImage);
+          }
+        }
+        state.error = null;
+      })
+      .addCase(updateProfilePicture.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || "Failed to update profile picture";
       });
   },
 });
