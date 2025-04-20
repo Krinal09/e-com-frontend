@@ -76,13 +76,18 @@ function ShoppingOrders() {
   };
 
   const getPaymentStatusColor = (status) => {
+    console.log("Payment Status:", status); // Debug log to inspect values
     switch (status?.toLowerCase()) {
       case 'paid':
         return 'bg-green-500';
       case 'failed':
         return 'bg-red-600';
-      default:
+      case 'pending':
         return 'bg-yellow-500';
+      case 'refunded':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500'; // Fallback to gray for unexpected values
     }
   };
 
@@ -134,7 +139,7 @@ function ShoppingOrders() {
                         else handleViewDetails(orderItem._id);
                       }}>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">View Details</Button>
+                          <Button size="sm">View Details</Button>
                         </DialogTrigger>
                         {selectedOrderId === orderItem._id && orderDetails && (
                           <ShoppingOrderDetailsView orderDetails={orderDetails} />
