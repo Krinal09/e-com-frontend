@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import { changePassword, deleteUserAccount, updateUserProfile } from "@/store/auth-slice";
+import { changePassword, deleteUserAccount, updateUserProfile, updateProfilePicture } from "@/store/auth-slice";
 import { FileIcon, UploadCloudIcon, XIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import axios from "axios";
@@ -26,10 +26,16 @@ function ProfileManagement() {
   const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
+    let abortController = new AbortController();
+  
     if (user) {
       setUserName(user.userName || "");
       setProfileImage(user.profileImage || "");
     }
+  
+    return () => {
+      abortController.abort(); // Cleanup on unmount
+    };
   }, [user]);
 
   function handleImageFileChange(event) {
@@ -56,30 +62,35 @@ function ProfileManagement() {
   }
 
   async function uploadImageToCloudinary() {
+    const abortController = new AbortController();
     setImageLoadingState(true);
     const data = new FormData();
     data.append("my_file", imageFile);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/admin/products/upload-image`,
-        data
+        data,
+        { signal: abortController.signal }
       );
-
       if (response?.data?.success) {
-        setProfileImage(response.data.result.url);
+        const newProfileImage = response.data.result.url;
+        setProfileImage(newProfileImage);
         setImageLoadingState(false);
+        dispatch(updateProfilePicture(newProfileImage));
       }
     } catch (error) {
-      console.error("Upload error:", error);
-      setImageLoadingState(false);
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload image. Please try again.",
-        variant: "destructive",
-      });
+      if (error.name !== "AbortError") {
+        console.error("Upload error:", error);
+        setImageLoadingState(false);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload image. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   }
-
+  
   useEffect(() => {
     if (imageFile !== null) uploadImageToCloudinary();
   }, [imageFile]);
@@ -197,7 +208,7 @@ function ProfileManagement() {
             )}
           </div>
         </div>
-        <Button onClick={handleProfileUpdate} disabled={isLoading}>
+        <Button variant="success" onClick={handleProfileUpdate} disabled={isLoading}>
           {isLoading ? "Updating..." : "Update Profile"}
         </Button>
       </div>
@@ -221,18 +232,18 @@ function ProfileManagement() {
             onChange={(e) => setNewPassword(e.target.value)}
           />
         </div>
-        <Button onClick={handlePasswordChange} disabled={isLoading}>
+        <Button variant="success" onClick={handlePasswordChange} disabled={isLoading}>
           {isLoading ? "Updating..." : "Change Password"}
         </Button>
       </div>
 
       {/* Delete Account */}
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-red-600">Danger Zone</h2>
-        <p>This will permanently delete your account and all associated data.</p>
+        {/* <h2 className="text-xl font-semibold text-red-600">Danger Zone</h2> */}
         <Button variant="destructive" onClick={handleDeleteAccount} disabled={isLoading}>
           {isLoading ? "Deleting..." : "Delete Account"}
         </Button>
+        <p>This will permanently delete your account and all associated data.</p>
       </div>
     </div>
   );
