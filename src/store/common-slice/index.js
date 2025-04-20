@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+// Centralized backend base URL
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const initialState = {
   isLoading: false,
@@ -12,7 +13,7 @@ export const getFeatureImages = createAsyncThunk(
   "/order/getFeatureImages",
   async () => {
     const response = await axios.get(
-      `${API_URL}/api/common/feature/get`
+      `${BASE_URL}/api/common/feature/get`
     );
 
     return response.data;
@@ -23,7 +24,7 @@ export const addFeatureImage = createAsyncThunk(
   "/order/addFeatureImage",
   async (image) => {
     const response = await axios.post(
-      `${API_URL}/api/common/feature/add`,
+      `${BASE_URL}/api/common/feature/add`,
       { image }
     );
 
