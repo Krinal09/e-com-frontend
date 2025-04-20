@@ -33,7 +33,7 @@ function ShoppingProductTile({ product, onClickDetails, onClickAddToCart }) {
               alt={title}
               className="w-full h-[300px] object-cover rounded-t-lg transition-transform group-hover:scale-105"
               onError={(e) => {
-                e.target.src = "/placeholder.jpg"; // Fallback image
+                e.target.src = "/placeholder.jpg"; 
               }}
             />
             {totalStock === 0 ? (
