@@ -1,52 +1,90 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Centralized backend base URL
-const BASE_URL = import.meta.env.VITE_BACKEND_URL;
-
 const initialState = {
-  isLoading: false,
+  categoryList: [],
+  loading: false,
+  error: null,
   featureImageList: [],
 };
 
-export const getFeatureImages = createAsyncThunk(
-  "/order/getFeatureImages",
-  async () => {
-    const response = await axios.get(
-      `${BASE_URL}/api/common/feature/get`
-    );
-
-    return response.data;
+export const getCategories = createAsyncThunk(
+  "/order/getCategories",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("/api/common/categories");
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
   }
 );
 
-export const addFeatureImage = createAsyncThunk(
-  "/order/addFeatureImage",
-  async (image) => {
-    const response = await axios.post(
-      `${BASE_URL}/api/common/feature/add`,
-      { image }
-    );
+export const addCategory = createAsyncThunk(
+  "/order/addCategory",
+  async (categoryData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post("/api/common/categories/add", categoryData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
 
-    return response.data;
+export const getFeatureImages = createAsyncThunk(
+  "/common/getFeatureImages",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("/api/common/feature/get");
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
   }
 );
 
 const commonSlice = createSlice({
-  name: "commonSlice",
+  name: "commonFeature",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(getCategories.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getCategories.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categoryList = action.payload.data;
+      })
+      .addCase(getCategories.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to fetch categories";
+        state.categoryList = [];
+      })
+      .addCase(addCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addCategory.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(addCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to add category";
+      })
       .addCase(getFeatureImages.pending, (state) => {
-        state.isLoading = true;
+        state.loading = true;
+        state.error = null;
       })
       .addCase(getFeatureImages.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.loading = false;
         state.featureImageList = action.payload.data;
       })
-      .addCase(getFeatureImages.rejected, (state) => {
-        state.isLoading = false;
+      .addCase(getFeatureImages.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to fetch feature images";
         state.featureImageList = [];
       });
   },
