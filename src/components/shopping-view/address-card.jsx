@@ -1,6 +1,7 @@
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter } from "../ui/card";
 import { Label } from "../ui/label";
+import { Edit, Trash2 } from "lucide-react";
 
 function AddressCard({
   addressInfo,
@@ -30,8 +31,26 @@ function AddressCard({
         <Label>Notes: {addressInfo?.notes}</Label>
       </CardContent>
       <CardFooter className="p-3 flex justify-between">
-        <Button onClick={() => handleEditAddress(addressInfo)}>Edit</Button>
-        <Button onClick={() => handleDeleteAddress(addressInfo)}>Delete</Button>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditAddress(addressInfo);
+          }}
+          className="bg-green-600 hover:bg-green-700 text-white h-8"
+          size="sm"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteAddress(addressInfo);
+          }}
+          className="bg-red-600 hover:bg-red-700 text-white h-8"
+          size="sm"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </CardFooter>
     </Card>
   );
