@@ -1,14 +1,13 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Centralized backend base URL
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const initialState = {
   isAuthenticated: false,
   isLoading: true,
   user: null,
-  error: null,
+  error: null, 
 };
 
 export const registerUser = createAsyncThunk(
