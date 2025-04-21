@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Centralized backend base URL
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const initialState = {
@@ -45,7 +44,7 @@ export const fetchProductDetails = createAsyncThunk(
   }
 );
 
-// For admin to get all products
+// NEW: For admin to get all products
 export const fetchAllProducts = createAsyncThunk(
   "/products/fetchAllAdminProducts",
   async () => {
