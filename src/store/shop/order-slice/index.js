@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// Centralize base URL
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const initialState = {
@@ -14,7 +13,7 @@ const initialState = {
 };
 
 export const createNewOrder = createAsyncThunk(
-  "order/createNewOrder",
+  "/order/createNewOrder",
   async (orderData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
@@ -23,7 +22,7 @@ export const createNewOrder = createAsyncThunk(
         {
           withCredentials: true,
           headers: {
-            "Content-Type": "application/json"
+            'Content-Type': 'application/json'
           }
         }
       );
@@ -47,19 +46,19 @@ export const createNewOrder = createAsyncThunk(
 );
 
 export const capturePayment = createAsyncThunk(
-  "order/capturePayment",
+  "/order/capturePayment",
   async ({ paymentId, payerId, orderId }) => {
     const response = await axios.post(
       `${BASE_URL}/api/shop/orders/capture`,
       {
         paymentId,
         payerId,
-        orderId
+        orderId,
       },
       {
         withCredentials: true,
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json'
         }
       }
     );
@@ -69,7 +68,7 @@ export const capturePayment = createAsyncThunk(
 );
 
 export const getAllOrdersByUserId = createAsyncThunk(
-  "order/getAllOrdersByUserId",
+  "/order/getAllOrdersByUserId",
   async (userId) => {
     const response = await axios.get(
       `${BASE_URL}/api/shop/orders/list/${userId}`,
@@ -83,7 +82,7 @@ export const getAllOrdersByUserId = createAsyncThunk(
 );
 
 export const getOrderDetails = createAsyncThunk(
-  "order/getOrderDetails",
+  "/order/getOrderDetails",
   async (id) => {
     const response = await axios.get(
       `${BASE_URL}/api/shop/orders/details/${id}`,
@@ -134,10 +133,9 @@ const shoppingOrderSlice = createSlice({
         state.isLoading = false;
         state.orderList = action.payload.data;
       })
-      .addCase(getAllOrdersByUserId.rejected, (state, action) => {
+      .addCase(getAllOrdersByUserId.rejected, (state) => {
         state.isLoading = false;
         state.orderList = [];
-        state.error = action.payload?.message || "Failed to fetch orders";
       })
       .addCase(getOrderDetails.pending, (state) => {
         state.isLoading = true;
@@ -146,10 +144,9 @@ const shoppingOrderSlice = createSlice({
         state.isLoading = false;
         state.orderDetails = action.payload.data;
       })
-      .addCase(getOrderDetails.rejected, (state, action) => {
+      .addCase(getOrderDetails.rejected, (state) => {
         state.isLoading = false;
         state.orderDetails = null;
-        state.error = action.payload?.message || "Failed to get order details";
       });
   },
 });
